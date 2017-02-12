@@ -1,5 +1,7 @@
 # NOTES
 
+## RTSP - Real Time Streaming Protocol
+
 Airplay uses RTSP - Real Time Streaming Protocol
 
 See rtsp.c for an implementation.  In particular, see the `method_handlers` to get a feel
@@ -10,14 +12,16 @@ The server will responds with list of commands it supports.
 
 Example from rstp.c...
 
-
-  resp->respcode = 200;
-  msg_add_header(resp, "Public", "ANNOUNCE, SETUP, RECORD, "
+    resp->respcode = 200;
+    msg_add_header(resp, "Public", "ANNOUNCE, SETUP, RECORD, "
                                  "PAUSE, FLUSH, TEARDOWN, "
                                  "OPTIONS, GET_PARAMETER, SET_PARAMETER");
 
+So, our shairport server supports these commands.
 
-Our server supports these commands.
+## DACP - Digital Access Control Protocol
+
+https://nto.github.io/AirPlay.html#audio-remotecontrol
 
 I'm interested in controlling the Airplay client from the server.  This is done
 via HTTP requests to the DACP server on the iDevice.  The client advertises
@@ -47,15 +51,11 @@ a song).  You will see this...
       Type: "Server", content: "AirTunes/105.1"
       Type: "Public", content: "ANNOUNCE, SETUP, RECORD, PAUSE, FLUSH, TEARDOWN, OPTIONS, GET_PARAMETER, SET_PARAMETER"
       
-You can see a new connection and an OPTIONS request/response.
+You can see a new connection and an OPTIONS request/response.  Take note of the DACP-ID and Active-Remote fields.
 
-
-Filtered...
-    -> shairport-sync -vvv 2>&1 | egrep -i 'dacp|daid|remote'
-        DACP-ID: C5D6F116EEC74A5.
-        Active-Remote: 2379330968.
-      Type: "DACP-ID", content: "C5D6F116EEC74A5"
-      Type: "Active-Remote", content: "2379330968"
+    shairport-sync -vvv 2>&1 | egrep -i 'dacp|daid|remote' | grep Type
+    Type: "DACP-ID", content: "C5D6F116EEC74A5"
+    Type: "Active-Remote", content: "2379330968"
       
 The DACP-ID plus Active-Remote are what we need to talk (via HTTP to the client from the server).
 
@@ -79,13 +79,11 @@ So, as you are streaming a song, run this..
     =;eth0;IPv6;iTunes_Ctrl_22F6CF2AF21C9417;iTunes Remote Control;local;Shanes-iPhone-6.local;192.168.1.2;57221;
     =;eth0;IPv4;iTunes_Ctrl_22F6CF2AF21C9417;iTunes Remote Control;local;Shanes-iPhone-6.local;192.168.1.2;57221;
 
-
 Now combine the data from the browse command with curl to control the client...
 
 pi -> curl 'http://192.168.1.2:57221/ctrl-int/1/nextitem' -H 'Active-Remote: 415355085' -H 'Host: Shanes-iPhone-6.local.'
 pi -> curl 'http://192.168.1.2:57221/ctrl-int/1/previtem' -H 'Active-Remote: 415355085' -H 'Host: Shanes-iPhone-6.local.'
 pi -> curl 'http://192.168.1.2:57221/ctrl-int/1/volumeup' -H 'Active-Remote: 415355085' -H 'Host: Shanes-iPhone-6.local.'
-
 
 The shairport daemon also advertises itself via mDNS.
 
