@@ -81,14 +81,16 @@ So, as you are streaming a song, run this..
 
 Now combine the data from the browse command with curl to control the client...
 
-pi -> curl 'http://192.168.1.2:57221/ctrl-int/1/nextitem' -H 'Active-Remote: 415355085' -H 'Host: Shanes-iPhone-6.local.'
-pi -> curl 'http://192.168.1.2:57221/ctrl-int/1/previtem' -H 'Active-Remote: 415355085' -H 'Host: Shanes-iPhone-6.local.'
-pi -> curl 'http://192.168.1.2:57221/ctrl-int/1/volumeup' -H 'Active-Remote: 415355085' -H 'Host: Shanes-iPhone-6.local.'
+    curl 'http://192.168.1.2:57221/ctrl-int/1/nextitem' -H 'Active-Remote: 415355085' -H 'Host: Shanes-iPhone-6.local.'
+    curl 'http://192.168.1.2:57221/ctrl-int/1/previtem' -H 'Active-Remote: 415355085' -H 'Host: Shanes-iPhone-6.local.'
+    curl 'http://192.168.1.2:57221/ctrl-int/1/volumeup' -H 'Active-Remote: 415355085' -H 'Host: Shanes-iPhone-6.local.'
 
 The shairport daemon also advertises itself via mDNS.
 
 I could just parse the avahi-browse output each time a button is pushed.  However, it takes some time (seconds) to 
-get the results back.  So, it would be better to take the approach used by the author above here. 
+get the results back.  So, it would be better to take the approach used by the author above here.   That is, to
+make calls into the AVAHI library.  My implementation will also monitor the Raspbery PI GPIOs to trigger the 
+events.
 
 http://www.win.tue.nl/~johanl/educ/IoT-Course/mDNS-SD%20Tutorial.pdf
 
