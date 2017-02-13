@@ -8,6 +8,7 @@
 #include <locale.h>
 #include <ctype.h>
 #include <pthread.h>
+#include <unistd.h>
 
 #include <sys/socket.h>
 #include <net/if.h>
@@ -379,3 +380,4 @@ int main(int argc, char *argv[]) {
 	poll_loop(&s);
 	return 0;
 }
+
