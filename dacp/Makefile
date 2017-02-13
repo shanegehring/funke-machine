@@ -6,8 +6,8 @@ CC=gcc
 CFLAGS=-D_REENTRANT
 LDFLAGS=-lavahi-common -lavahi-client -lavahi-core
 
-avahi_client: avahi_client.o
+dacp_agent: dacp_agent.o
 	$(CC) $< -o $@ $(LDFLAGS)
 
 clean:
-	$(RM) avahi_client.o avahi_client
+	$(RM) dacp_agent.o dacp_agent
