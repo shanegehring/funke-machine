@@ -79,13 +79,15 @@ So, as you are streaming a song, run this..
     =;eth0;IPv6;iTunes_Ctrl_22F6CF2AF21C9417;iTunes Remote Control;local;Shanes-iPhone-6.local;192.168.1.2;57221;
     =;eth0;IPv4;iTunes_Ctrl_22F6CF2AF21C9417;iTunes Remote Control;local;Shanes-iPhone-6.local;192.168.1.2;57221;
 
+    avahi-browse -v -a -r -p -t | perl -lane 'if (($_ =~ /iTunes/)and($_ =~ /IPv4/)) { @c = split(/;/, $_); print "$c[3] $c[6] $c[7] $c[8]"; }'
+
 Now combine the data from the browse command with curl to control the client...
 
     curl 'http://192.168.1.2:57221/ctrl-int/1/nextitem' -H 'Active-Remote: 415355085' -H 'Host: Shanes-iPhone-6.local.'
     curl 'http://192.168.1.2:57221/ctrl-int/1/previtem' -H 'Active-Remote: 415355085' -H 'Host: Shanes-iPhone-6.local.'
     curl 'http://192.168.1.2:57221/ctrl-int/1/volumeup' -H 'Active-Remote: 415355085' -H 'Host: Shanes-iPhone-6.local.'
 
-The shairport daemon also advertises itself via mDNS.
+The shairport daemon also advertises itself via mDNS.  Grep for the name of your server to see it.
 
 I could just parse the avahi-browse output each time a button is pushed.  However, it takes some time (seconds) to 
 get the results back.  So, it would be better to take the approach used by the author above here.   That is, to
