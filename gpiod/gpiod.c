@@ -36,7 +36,9 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <wiringPi.h>
-
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
 
 // globalCounter:
 //	Global variable to count interrupts
@@ -58,6 +60,25 @@ void myInterrupt4 (void) { ++globalCounter [4] ; }
 void myInterrupt5 (void) { ++globalCounter [5] ; }
 void myInterrupt6 (void) { ++globalCounter [6] ; }
 void myInterrupt7 (void) { ++globalCounter [7] ; }
+
+void do_cmd(const char* cmd) {
+
+  static int sockfd;
+  if (sockfd == 0)
+    sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+  if (cmd == NULL)
+    return;
+
+  struct sockaddr_in si;
+  memset(&si, 0, sizeof(si));
+  si.sin_family = AF_INET;
+  si.sin_port = htons(3391);
+  inet_aton("127.0.0.1", &si.sin_addr);
+
+  printf("CMD %s\n", cmd);
+  sendto(sockfd, cmd, strlen(cmd)+1, 0, (struct sockaddr *)&si, sizeof(si));
+
+}
 
 
 /*
@@ -99,6 +120,7 @@ int main (void)
 	  printf (" Int on pin %d: Counter: %5d\n", pin, globalCounter [pin]) ;
 	  myCounter [pin] = globalCounter [pin] ;
 	  ++gotOne ;
+          do_cmd(myCounter[pin] & 1 ? "volumeup" : "nextitem");
 	}
       }
       if (gotOne != 0)
@@ -108,3 +130,4 @@ int main (void)
 
   return 0 ;
 }
+
