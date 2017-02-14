@@ -36,4 +36,13 @@ Commands via DACP:
 |volumedown    | turn audio volume down            |
 |volumeup      | turn audio volume up              |
 
+# Installation
+
+Using autotools...
+
+    ./autogen.sh
+    ./configure
+    make
+    make install
+
 
