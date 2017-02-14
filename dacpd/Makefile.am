@@ -4,5 +4,5 @@
 
 bin_PROGRAMS = shairport-dacpd
 shairport_dacpd_SOURCES = dacpd.c
-AM_LDFLAGS = -lavahi-common -lavahi-client -lavahi-core
+shairport_dacpd_LDADD = -lavahi-common -lavahi-client -lavahi-core
 
