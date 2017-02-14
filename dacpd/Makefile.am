@@ -2,7 +2,7 @@
 #  -> sudo apt-get install libavahi-core-dev
 #  -> sudo apt-get install libavahi-client-dev
 
-bin_PROGRAMS = dacp_agent
-dacp_agent_SOURCES = dacp_agent.c
+bin_PROGRAMS = shairport-dacpd
+shairport_dacpd_SOURCES = dacpd.c
 AM_LDFLAGS = -lavahi-common -lavahi-client -lavahi-core
 

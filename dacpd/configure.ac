@@ -1,4 +1,4 @@
-AC_INIT([dacp_agent], [1.0], [bug-automake@gnu.org])
+AC_INIT([shairport-dacpd], [1.0], [bug-automake@gnu.org])
 AM_INIT_AUTOMAKE([-Wall -Werror foreign])
 AC_PROG_CC
 AC_CONFIG_HEADERS([config.h])

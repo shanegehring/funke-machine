@@ -1,4 +1,4 @@
-# DACP Agent
+# Shairport DACP Daemon
 
 This code is how we control the iDevice streaming the audio.  For example,
 we can play the next song, or modify the volume.  This is done via the
