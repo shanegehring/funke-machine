@@ -141,9 +141,7 @@ static int ctx_ismatch(ctx_t *c, const char *name) {
     }
     tname[ti] = '\0';
     ti = startswith(tname, c->match.name_prefix);
-    fprintf(stderr, "before free\n");
     free(tname);
-    fprintf(stderr, "after free\n");
     return ti;
   }
   return 1;
