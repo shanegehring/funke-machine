@@ -122,7 +122,7 @@ static int ctx_ismatch(ctx_t *c, const char *name) {
   if (c->match.name_prefix)  {
     // Strip off leading 0's of ID before comparison:
     // Example:  iTunes_Ctrl_0F44ADA81654B1C9 => iTunes_Ctrl_F44ADA81654B1C9
-    char *tname = (char *)malloc(strlen(name));
+    char *tname = (char *)malloc(strlen(name) + 1);
     int ni = 0;
     int ti = 0;
     int skip = 0;
@@ -140,8 +140,10 @@ static int ctx_ismatch(ctx_t *c, const char *name) {
       ni++;
     }
     tname[ti] = '\0';
-    ti = startswith((char *)tname, c->match.name_prefix);
+    ti = startswith(tname, c->match.name_prefix);
+    fprintf(stderr, "before free\n");
     free(tname);
+    fprintf(stderr, "after free\n");
     return ti;
   }
   return 1;
