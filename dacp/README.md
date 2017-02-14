@@ -43,6 +43,6 @@ Using autotools...
     ./autogen.sh
     ./configure
     make
-    make install
+    sudo make install
 
 
