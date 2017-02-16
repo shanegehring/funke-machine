@@ -13,8 +13,8 @@
 /* DACP Daemon Port */
 #define DACPD_PORT 3391
 
-/* By default, suppress anything under 10 ms */
-#define DBOUNCE_THRESHOLD_NSEC (60*1000*1000)
+/* By default, suppress anything under X ms */
+#define DBOUNCE_THRESHOLD_NSEC (250*1000*1000)
 
 /* Button ISR callback signature */
 typedef void (*button_isr)(void);
@@ -55,7 +55,7 @@ static void send_cmd(const char* cmd) {
   si.sin_port = htons(DACPD_PORT);
   inet_aton("127.0.0.1", &si.sin_addr);
 
-  printf("CMD: %s\n", cmd); 
+  printf("%s\n", cmd); 
   fflush(stdout);
   sendto(sockfd, cmd, strlen(cmd)+1, 0, (struct sockaddr *)&si, sizeof(si));
 
@@ -147,7 +147,9 @@ int main (void)
   /* Go! */
   printf("Monitoring GPIO activity...\n");
   fflush(stdout);
-  while(1);
+  while(1) {
+    pause();
+  }
 
   return 0;
 }
