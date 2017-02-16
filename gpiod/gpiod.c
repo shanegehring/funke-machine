@@ -6,6 +6,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
+#include <arpa/inet.h>
 #include <time.h>
 #include <unistd.h>
 
@@ -13,7 +14,7 @@
 #define DACPD_PORT 3391
 
 /* By default, suppress anything under 10 ms */
-#define DBOUNCE_THRESHOLD_NSEC 10*1000*1000
+#define DBOUNCE_THRESHOLD_NSEC (60*1000*1000)
 
 /* Button ISR callback signature */
 typedef void (*button_isr)(void);
@@ -28,35 +29,17 @@ typedef struct {
 
 /* Group of all buttons */
 typedef struct {
-  button_t vup;
-  button_t vdown;
-  button_t mute;
-  button_t next;
-  button_t prev;
-  button_t pause;
+  button_t *vup;
+  button_t *vdown;
+  button_t *mute;
+  button_t *next;
+  button_t *prev;
+  button_t *pause;
 } buttons_t;
 
-/* Prototypes */
-static void isr_vup(void);
-static void isr_vdown(void);
-static void isr_mute(void);
-static void isr_next(void);
-static void isr_prev(void);
-static void isr_pause(void);
-static void debounce(button_t *button);
-static void send_cmd(const char* cmd);
-static void init_button(const button_t* button);
+/* Buttons */
+static buttons_t buttons;
 
-/* Button configuration structure init */
-static buttons_t buttons = {
-  .vdown = { .id=23, .cmd="volumeup",   .isr=isr_vdown, .time={ .tv_sec=0, .tv_nsec=0 } },
-  .vup   = { .id=24, .cmd="volumedown", .isr=isr_vup,   .time={ .tv_sec=0, .tv_nsec=0 } },
-  .mute  = { .id=18, .cmd="mutetoggle", .isr=isr_mute,  .time={ .tv_sec=0, .tv_nsec=0 } },
-  .next  = { .id=25, .cmd="nextitem",   .isr=isr_next,  .time={ .tv_sec=0, .tv_nsec=0 } },
-  .prev  = { .id=7,  .cmd="previtem",   .isr=isr_prev,  .time={ .tv_sec=0, .tv_nsec=0 } },
-  .pause = { .id=8,  .cmd="playpause",  .isr=isr_pause, .time={ .tv_sec=0, .tv_nsec=0 } }
-};
-   
 /* Sends message to DACPD */
 static void send_cmd(const char* cmd) {
 
@@ -107,15 +90,29 @@ static void debounce(button_t *button) {
 }
 
 /* GPIO ISRs */
-static void isr_vup(void)   { debounce(&buttons.vup);   }
-static void isr_vdown(void) { debounce(&buttons.vdown); }
-static void isr_mute(void)  { debounce(&buttons.mute);  }
-static void isr_next(void)  { debounce(&buttons.next);  }
-static void isr_prev(void)  { debounce(&buttons.prev);  }
-static void isr_pause(void) { debounce(&buttons.pause); }
+static void isr_vup(void)   { debounce(buttons.vup);   }
+static void isr_vdown(void) { debounce(buttons.vdown); }
+static void isr_mute(void)  { debounce(buttons.mute);  }
+static void isr_next(void)  { debounce(buttons.next);  }
+static void isr_prev(void)  { debounce(buttons.prev);  }
+static void isr_pause(void) { debounce(buttons.pause); }
 
-/* Registers button ISR */
-static void init_button(const button_t* button) {
+/* Create a new button */
+static button_t* button_new(int id, const char* cmd, button_isr isr)
+{
+  /* Allocate new button */
+  button_t *button = (button_t *)malloc(sizeof(button_t));
+  if (button == NULL) {
+    printf("FATAL: Cannot allocate button struct\n");
+    exit(1);
+  }
+
+  /* Init data */
+  button->id = id;
+  button->isr = isr;
+  button->time.tv_sec = 0;
+  button->time.tv_nsec = 0;
+  strncpy(button->cmd, cmd, 32);
 
   /* Enable pull up resistor */
   pullUpDnControl(button->id, PUD_UP);
@@ -125,6 +122,12 @@ static void init_button(const button_t* button) {
     printf("FATAL: Cannot setup ISR on button %d (%s)\n", button->id, button->cmd); 
     exit(1);
   }
+
+  /* Debug */
+  printf("New button %-11s on gpio %2d @ isr %p\n", button->cmd, button->id, button->isr);
+
+  return button;
+
 }
 
 /* Main */
@@ -134,12 +137,12 @@ int main (void)
   wiringPiSetupGpio();
 
   /* Setup our buttons with wiringPi */
-  init_button(&buttons.vup);
-  init_button(&buttons.vdown);
-  init_button(&buttons.mute);
-  init_button(&buttons.next);
-  init_button(&buttons.prev);
-  init_button(&buttons.pause);
+  buttons.vdown = button_new(23, "volumeup",   isr_vdown);
+  buttons.vup   = button_new(24, "volumedown", isr_vup);
+  buttons.mute  = button_new(18, "mutetoggle", isr_mute);
+  buttons.next  = button_new(25, "nextitem",   isr_next);
+  buttons.prev  = button_new( 7, "previtem",   isr_prev);
+  buttons.pause = button_new( 8, "playpause",  isr_pause);
 
   /* Go! */
   printf("Monitoring GPIO activity...\n");
