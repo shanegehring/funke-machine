@@ -1,10 +1,12 @@
-# GPIO Based Volume Controls
+# GPIO Daemon 
 
 This component uses the `wiringPi` library to control AirPlay playback
-options via monitoring GPIO pin changes caused by push buttons.
+options (next, prev, mute, etc.) via monitoring GPIO pin changes caused
+by physical push buttons.
 
 The shairport-dacpd daemon receives messages generated from this component
-when a button is pushed.
+when a button is pushed.  It then handles the DACP portion of communicating
+to the AirPlay client.
 
 # The wiringPi Library
 
@@ -24,10 +26,19 @@ for it like this...
         -> See the man-page for more details
         -> ie. export WIRINGPI_GPIOMEM=1
 
-I also see `wiringPi.h` in `/usr/include` and `libwiringPi.so` and 
-`libwiringPiDev.so` in `/usr/lib`.  So, this will allow me to build a GPIO
-based application using the library without installing anythin else.
+I also saw `wiringPi.h` in `/usr/include` and `libwiringPi.so` and 
+`libwiringPiDev.so` in `/usr/lib`.  So, this allowed me to build a GPIO
+based application using the library without installing anything else.
 
-# 
+# Design
+
+The external GPIOs are each connected to simple momentary push button 
+switches without hardware filters.  The main thread just sets things up
+and goes to sleep.  The setup involves configuring each GPIO as an input 
+with a pullup resistor (when the switch is open/not pressed, the input is 
+pulled high by the resistor).  We then register a negative edge interrupt
+handler for each button.  A software based debouncing implementation takes 
+care of the transition noise from the mechanical switch.  Communication to 
+the DACP daemon is just a simple UDP socket write of a string like "volumeup".
 
 
