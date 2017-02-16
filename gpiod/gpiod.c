@@ -35,7 +35,7 @@ void doCmd(const char* cmd) {
 
   printf("CMD: %s\n", cmd); 
   fflush(stdout);
-  sendto(sockfd, cmd, strlen(cmd)+1, 0, (struct sockaddr *)&si, sizeof(si));
+//  sendto(sockfd, cmd, strlen(cmd)+1, 0, (struct sockaddr *)&si, sizeof(si));
 
 }
 
@@ -52,12 +52,39 @@ int main (void)
 {
   wiringPiSetupGpio();
 
-  wiringPiISR(GPIO_VOLUME_MUTE, INT_EDGE_FALLING, &doVolumeMute);
-  wiringPiISR(GPIO_VOLUME_UP,   INT_EDGE_FALLING, &doVolumeUp);
-  wiringPiISR(GPIO_VOLUME_DOWN, INT_EDGE_FALLING, &doVolumeDown);
-  wiringPiISR(GPIO_PLAY_NEXT,   INT_EDGE_FALLING, &doPlayNext);
-  wiringPiISR(GPIO_PLAY_PREV,   INT_EDGE_FALLING, &doPlayPrev);
-  wiringPiISR(GPIO_PLAY_PAUSE,  INT_EDGE_FALLING, &doPlayPause);
+  /* Enable pull up resistors */
+  pullUpDnControl(GPIO_VOLUME_MUTE, PUD_UP);
+  pullUpDnControl(GPIO_VOLUME_UP,   PUD_UP);
+  pullUpDnControl(GPIO_VOLUME_DOWN, PUD_UP);
+  pullUpDnControl(GPIO_PLAY_NEXT,   PUD_UP);
+  pullUpDnControl(GPIO_PLAY_PREV,   PUD_UP);
+  pullUpDnControl(GPIO_PLAY_PAUSE,  PUD_UP);
+
+  /* Register ISRs */
+  if (wiringPiISR(GPIO_VOLUME_MUTE, INT_EDGE_FALLING, &doVolumeMute) != 0) { 
+    printf("ERROR: Cannot setup ISR on GPIO %d\n", GPIO_VOLUME_MUTE); 
+    return 1;
+  }
+  if (wiringPiISR(GPIO_VOLUME_UP,   INT_EDGE_FALLING, &doVolumeUp) != 0) { 
+    printf("ERROR: Cannot setup ISR on GPIO %d\n", GPIO_VOLUME_UP); 
+    return 1;
+  }
+  if (wiringPiISR(GPIO_VOLUME_DOWN, INT_EDGE_FALLING, &doVolumeDown) != 0) { 
+    printf("ERROR: Cannot setup ISR on GPIO %d\n", GPIO_VOLUME_DOWN); 
+    return 1;
+  }
+  if (wiringPiISR(GPIO_PLAY_NEXT,   INT_EDGE_FALLING, &doPlayNext) != 0) {
+    printf("ERROR: Cannot setup ISR on GPIO %d\n", GPIO_PLAY_NEXT); 
+    return 1;
+  }
+  if (wiringPiISR(GPIO_PLAY_PREV,   INT_EDGE_FALLING, &doPlayPrev) != 0) {;
+    printf("ERROR: Cannot setup ISR on GPIO %d\n", GPIO_PLAY_PREV); 
+    return 1;
+  }
+  if (wiringPiISR(GPIO_PLAY_PAUSE,  INT_EDGE_FALLING, &doPlayPause) != 0) {
+    printf("ERROR: Cannot setup ISR on GPIO %d\n", GPIO_PLAY_PAUSE);
+    return 1;
+  }
 
   printf("Monitoring GPIO activity...\n");
   fflush(stdout);
