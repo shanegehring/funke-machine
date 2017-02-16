@@ -14,7 +14,7 @@
 #define DACPD_PORT 3391
 
 /* By default, suppress anything under X ms */
-#define DBOUNCE_THRESHOLD_NSEC (250*1000*1000)
+#define DEBOUNCE_NSEC (250*1000*1000)
 
 /* Button ISR callback signature */
 typedef void (*button_isr)(void);
@@ -84,7 +84,7 @@ static void debounce(button_t *button) {
   button->time.tv_nsec = nowtime.tv_nsec;
 
   /* Filter if less than our threshold */
-  if (!((deltatime.tv_sec == 0) && (deltatime.tv_nsec < DBOUNCE_THRESHOLD_NSEC))) {
+  if (!((deltatime.tv_sec == 0) && (deltatime.tv_nsec < DEBOUNCE_NSEC))) {
     send_cmd(button->cmd);
   }
 }
@@ -136,7 +136,7 @@ int main (void)
   /* Use GPIO numbering scheme */
   wiringPiSetupGpio();
 
-  /* Setup our buttons with wiringPi */
+  /* Create our buttons */
   buttons.vdown = button_new(23, "volumeup",   isr_vdown);
   buttons.vup   = button_new(24, "volumedown", isr_vup);
   buttons.mute  = button_new(18, "mutetoggle", isr_mute);
@@ -144,7 +144,7 @@ int main (void)
   buttons.prev  = button_new( 7, "previtem",   isr_prev);
   buttons.pause = button_new( 8, "playpause",  isr_pause);
 
-  /* Go! */
+  /* Start monitor - sleep since we have nothing to do here */
   printf("Monitoring GPIO activity...\n");
   fflush(stdout);
   while(1) {
