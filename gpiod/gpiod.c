@@ -35,7 +35,7 @@ void doCmd(const char* cmd) {
 
   printf("CMD: %s\n", cmd); 
   fflush(stdout);
-//  sendto(sockfd, cmd, strlen(cmd)+1, 0, (struct sockaddr *)&si, sizeof(si));
+  sendto(sockfd, cmd, strlen(cmd)+1, 0, (struct sockaddr *)&si, sizeof(si));
 
 }
 
