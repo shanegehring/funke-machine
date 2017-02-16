@@ -1,5 +1,5 @@
 /*
- * GPIO monitor. This file is part of Funke Machine.
+ * GPIO Daemon. This file is part of Funke Machine.
  * Copyright (c) Shane Gehring 2017
  *
  * Permission is hereby granted, free of charge, to any person
@@ -62,27 +62,51 @@ typedef struct {
   button_t *pause;
 } buttons_t;
 
-/* Buttons */
-static buttons_t buttons;
+/* Buttons (global) */
+static buttons_t g_buttons;
+
+/* DACPD comm channel */
+typedef struct  {
+  int sockfd;
+  struct sockaddr_in si;
+} dacpd_t;
+
+/* DACPD comm channel pointer (global) */
+static dacpd_t* g_dacpd;
+
+/* Creates new DACPD comm channel */
+static dacpd_t* dacpd_new(void) {
+
+  /* Allocate new struct */
+  dacpd_t *dacpd = (dacpd_t *)malloc(sizeof(dacpd_t));
+  if (dacpd == NULL) {
+    printf("FATAL: Cannot allocate dacpd struct\n");
+    exit(1);
+  }
+
+  /* Create and init the socket */
+  dacpd->sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+  memset(&dacpd->si, 0, sizeof(dacpd->si));
+  dacpd->si.sin_family = AF_INET;
+  dacpd->si.sin_port = htons(DACPD_PORT);
+  inet_aton("127.0.0.1", &dacpd->si.sin_addr);
+
+  /* Debug */
+  printf("New DACPD comm channel created\n");
+
+  return dacpd;
+
+}
 
 /* Sends message to DACPD */
-static void send_cmd(const char* cmd) {
+static void dacpd_cmd(const char* cmd) {
 
-  static int sockfd;
-  if (sockfd == 0)
-    sockfd = socket(AF_INET, SOCK_DGRAM, 0);
   if (cmd == NULL)
     return;
 
-  struct sockaddr_in si;
-  memset(&si, 0, sizeof(si));
-  si.sin_family = AF_INET;
-  si.sin_port = htons(DACPD_PORT);
-  inet_aton("127.0.0.1", &si.sin_addr);
-
   printf("%s\n", cmd); 
   fflush(stdout);
-  sendto(sockfd, cmd, strlen(cmd)+1, 0, (struct sockaddr *)&si, sizeof(si));
+  sendto(g_dacpd->sockfd, cmd, strlen(cmd)+1, 0, (struct sockaddr *)&g_dacpd->si, sizeof(g_dacpd->si));
 
 }
 
@@ -110,17 +134,17 @@ static void debounce(button_t *button) {
 
   /* Filter if less than our threshold */
   if (!((deltatime.tv_sec == 0) && (deltatime.tv_nsec < DEBOUNCE_NSEC))) {
-    send_cmd(button->cmd);
+    dacpd_cmd(button->cmd);
   }
 }
 
 /* GPIO ISRs */
-static void isr_vup(void)   { debounce(buttons.vup);   }
-static void isr_vdown(void) { debounce(buttons.vdown); }
-static void isr_mute(void)  { debounce(buttons.mute);  }
-static void isr_next(void)  { debounce(buttons.next);  }
-static void isr_prev(void)  { debounce(buttons.prev);  }
-static void isr_pause(void) { debounce(buttons.pause); }
+static void isr_vup(void)   { debounce(g_buttons.vup);   }
+static void isr_vdown(void) { debounce(g_buttons.vdown); }
+static void isr_mute(void)  { debounce(g_buttons.mute);  }
+static void isr_next(void)  { debounce(g_buttons.next);  }
+static void isr_prev(void)  { debounce(g_buttons.prev);  }
+static void isr_pause(void) { debounce(g_buttons.pause); }
 
 /* Create a new button */
 static button_t* button_new(int id, const char* cmd, button_isr isr) {
@@ -161,13 +185,16 @@ int main (void) {
   /* Use GPIO numbering scheme */
   wiringPiSetupGpio();
 
+  /* Create our DACPD comm channel */
+  g_dacpd = dacpd_new();
+
   /* Create our buttons */
-  buttons.vdown = button_new(23, "volumeup",   isr_vdown);
-  buttons.vup   = button_new(24, "volumedown", isr_vup);
-  buttons.mute  = button_new(18, "mutetoggle", isr_mute);
-  buttons.next  = button_new(25, "nextitem",   isr_next);
-  buttons.prev  = button_new( 7, "previtem",   isr_prev);
-  buttons.pause = button_new( 8, "playpause",  isr_pause);
+  g_buttons.vdown = button_new(23, "volumeup",   isr_vdown);
+  g_buttons.vup   = button_new(24, "volumedown", isr_vup);
+  g_buttons.mute  = button_new(18, "mutetoggle", isr_mute);
+  g_buttons.next  = button_new(25, "nextitem",   isr_next);
+  g_buttons.prev  = button_new( 7, "previtem",   isr_prev);
+  g_buttons.pause = button_new( 8, "playpause",  isr_pause);
 
   /* Start monitor - sleep since we have nothing to do here */
   printf("Monitoring GPIO activity...\n");
