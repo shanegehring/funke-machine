@@ -82,3 +82,10 @@ Note, I saw some messages about "pulse" which don't seem to matter.
 At this point, if everything worked, you should see a "Funke Machine" available
 from your iPhone.
 
+# TODO
+
+* Create services for dacpd and gpiod
+* Install services via autotools make install
+* Get Pi 3 model B device + Power Supply
+* Get HiFi Berry DAC+ RCA
+* Test
