@@ -189,12 +189,22 @@ int main (void) {
   g_dacpd = dacpd_new();
 
   /* Create our buttons */
+#define PROTO /* Uses old pi 1 board GPIO mappings */
+#ifdef  PROTO
   g_buttons.vdown = button_new(23, "volumeup",   isr_vdown);
   g_buttons.vup   = button_new(24, "volumedown", isr_vup);
   g_buttons.mute  = button_new(18, "mutetoggle", isr_mute);
   g_buttons.next  = button_new(25, "nextitem",   isr_next);
   g_buttons.prev  = button_new( 7, "previtem",   isr_prev);
   g_buttons.pause = button_new( 8, "playpause",  isr_pause);
+#else
+  g_buttons.vdown = button_new(13, "volumeup",   isr_vdown);
+  g_buttons.vup   = button_new(26, "volumedown", isr_vup);
+  g_buttons.mute  = button_new( 6, "mutetoggle", isr_mute);
+  g_buttons.next  = button_new(12, "nextitem",   isr_next);
+  g_buttons.prev  = button_new( 5, "previtem",   isr_prev);
+  g_buttons.pause = button_new(16, "playpause",  isr_pause);
+#endif
 
   /* Start monitor - sleep since we have nothing to do here */
   printf("Monitoring GPIO activity...\n");
