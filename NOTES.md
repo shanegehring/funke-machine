@@ -96,3 +96,19 @@ events.
 
 http://www.win.tue.nl/~johanl/educ/IoT-Course/mDNS-SD%20Tutorial.pdf
 
+
+# Systemd Services
+
+To launch gpiod and dacpd on bootup, I needed to create `unit` files for
+systemd.
+
+    sudo cp dacpd.service /lib/systemd/system/
+    sudo cd /etc/systemd/system && ln -sf /lib/systemd/system/dacpd.service .
+    sudo cp gpiod.service /lib/systemd/system/
+    sudo cd /etc/systemd/system && ln -sf /lib/systemd/system/gpiod.service .
+    sudo systemctl start  dacpd
+    sudo systemctl status dacpd
+    sudo systemctl start  gpiod
+    sudo systemctl status gpiod
+    tail -f /var/log/syslog
+

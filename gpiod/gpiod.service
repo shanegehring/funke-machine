@@ -1,0 +1,15 @@
+[Unit]
+Description=GPIO Daemon Service"
+After=sound.target
+Requires=dacpd.service
+After=dacpd.service
+Wants=network-online.target
+After=network.target network-online.target
+
+[Service]
+ExecStart=/usr/local/bin/funke-machine-gpiod
+User=root
+Group=root
+
+[Install]
+WantedBy=multi-user.target
