@@ -106,11 +106,14 @@ systemd.
     sudo cd /etc/systemd/system && ln -sf /lib/systemd/system/dacpd.service .
     sudo systemctl start  dacpd
     sudo systemctl status dacpd
+    sudo systemctl enable dacpd # Start after reboot
 
     sudo cp gpiod.service /lib/systemd/system/
     sudo cd /etc/systemd/system && ln -sf /lib/systemd/system/gpiod.service .
     sudo systemctl start  gpiod
     sudo systemctl status gpiod
+    sudo systemctl enable gpiod # Start after reboot
 
     tail -f /var/log/syslog
 
+    sudo shutdown -r now
