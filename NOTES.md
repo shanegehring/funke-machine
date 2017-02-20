@@ -104,11 +104,13 @@ systemd.
 
     sudo cp dacpd.service /lib/systemd/system/
     sudo cd /etc/systemd/system && ln -sf /lib/systemd/system/dacpd.service .
-    sudo cp gpiod.service /lib/systemd/system/
-    sudo cd /etc/systemd/system && ln -sf /lib/systemd/system/gpiod.service .
     sudo systemctl start  dacpd
     sudo systemctl status dacpd
+
+    sudo cp gpiod.service /lib/systemd/system/
+    sudo cd /etc/systemd/system && ln -sf /lib/systemd/system/gpiod.service .
     sudo systemctl start  gpiod
     sudo systemctl status gpiod
+
     tail -f /var/log/syslog
 
