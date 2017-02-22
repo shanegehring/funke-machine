@@ -38,11 +38,15 @@ Commands via DACP:
 
 # Installation
 
-Using autotools...
+    sudo apt-get install libavahi-core-dev
 
     ./autogen.sh
     ./configure
     make
     sudo make install
 
+    sudo cp dacpd.service /lib/systemd/system/
+    sudo systemctl enable dacpd # Start after reboot
+    sudo systemctl start  dacpd
+    sudo systemctl status dacpd
 

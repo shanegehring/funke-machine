@@ -30,6 +30,14 @@ I also saw `wiringPi.h` in `/usr/include` and `libwiringPi.so` and
 `libwiringPiDev.so` in `/usr/lib`.  So, this allowed me to build a GPIO
 based application using the library without installing anything else.
 
+# Without the wiringPi Library
+
+    git clone git://git.drogon.net/wiringPi
+    cd wiringPi
+    ./build
+
+    gpio -v
+
 # Design
 
 The external GPIOs are each connected to simple momentary push button 
@@ -41,4 +49,15 @@ handler for each button.  A software based debouncing implementation takes
 care of the transition noise from the mechanical switch.  Communication to 
 the DACP daemon is just a simple UDP socket write of a string like "volumeup".
 
+# Installation
+
+    ./autogen.sh
+    ./configure
+    make
+    sudo make install
+
+    sudo cp gpiod.service /lib/systemd/system/
+    sudo systemctl enable gpiod # Start after reboot
+    sudo systemctl start  gpiod
+    sudo systemctl status gpiod
 

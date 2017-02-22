@@ -1,29 +1,22 @@
 # Funke Machine
 
 
-## Install Raspbian
+## Install Raspbian with Hifiberry Stuff
 
-I used the PIXEL version.  
+I used the 'lite' version.  
 
 ## Enable SSH
 
     sudo raspi-config
-    Advanced Options -> SSH -> Enable
+    Interfacing Options -> SSH -> Enable
     Change User Password
     Reboot
 
 ## Enable/force headphone audio jack
 
-Initially, I had a problem where no audo would come out to the headphone
-jack.  I did this...
-
-    sudo raspi-config
-    Advanced Options -> Audio
-    Force headphone jack
-    
 At this point, log in remotely via ssh like this...
 
-    ssh pi@192.168.1.65
+    ssh pi@192.168.1.64
     
 ## Install Sharepoint-Sync Build Dependencies
 
@@ -37,7 +30,7 @@ At this point, log in remotely via ssh like this...
 
     mkdir git
     cd git
-    git clone https://github.com/mikebrady/shairport-sync.git
+    git clone https://github.com/shanegehring/shairport-sync.git
     cd shairport-sync
     # Configure build
     autoreconf -i -f
@@ -63,7 +56,6 @@ My settings...
     
     alsa = {
       output_device = "hw:0";
-      mixer_control_name = "PCM";
     };
     
 ## Run

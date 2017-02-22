@@ -189,7 +189,7 @@ int main (void) {
   g_dacpd = dacpd_new();
 
   /* Create our buttons */
-#define PROTO /* Uses old pi 1 board GPIO mappings */
+//#define PROTO /* Uses old pi 1 board GPIO mappings */
 #ifdef  PROTO
   g_buttons.vdown = button_new(23, "volumeup",   isr_vdown);
   g_buttons.vup   = button_new(24, "volumedown", isr_vup);
