@@ -206,7 +206,7 @@ static led_t* led_new(int id, const char* color, int status) {
   /* Init data */
   led->id = id;
   led->status = status;
-  strncpy(button->color, color, 32);
+  strncpy(led->color, color, 32);
 
   /* Set mode to output */
   pinMode(led->id, OUTPUT);
@@ -217,7 +217,7 @@ static led_t* led_new(int id, const char* color, int status) {
   /* Debug */
   fprintf(stderr, "New %s LED on gpio %2d: %s\n", led->color, led->id, led->status ? "ON" : "OFF");
 
-  return button;
+  return led;
 
 }
 
