@@ -12,12 +12,25 @@ I used the 'lite' version.
     Change User Password
     Reboot
 
-## Enable/force headphone audio jack
+## SSH Login
 
 At this point, log in remotely via ssh like this...
 
     ssh pi@192.168.1.64
+
+## Enble wifi...
+
+    sudo vi /etc/wpa_supplicant/wpa_supplicant.conf
+
+    country=GB
+    ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev
+    update_config=1
     
+    network={
+        ssid="Gehring"
+        psk="**passwordhere**"
+    }
+
 ## Install Sharepoint-Sync Build Dependencies
 
     sudo apt-get update
