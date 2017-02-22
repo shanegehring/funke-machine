@@ -38,6 +38,12 @@ based application using the library without installing anything else.
 
     gpio -v
 
+# Wiring pi GPIO outputs from command line
+
+    gpio -g mode  24 out
+    gpio -g write 24 1
+    gpio -g write 24 0
+
 # Design
 
 The external GPIOs are each connected to simple momentary push button 
