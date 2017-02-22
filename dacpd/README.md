@@ -11,8 +11,8 @@ I read here...
 
 It listens for messages from two sources:
 
- 1) The modified shairport server (DACP ID and Active Remote ID info) 
- 2) User messages like 'nextitem', 'previtem', etc.
+1. The modified shairport server (DACP ID and Active Remote ID info) 
+2. User messages like 'nextitem', 'previtem', etc.
 
 Example of how to send a user message...
 
