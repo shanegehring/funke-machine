@@ -65,6 +65,21 @@ typedef struct {
 /* Buttons (global) */
 static buttons_t g_buttons;
 
+/* LED */
+typedef struct {
+  int id;           /* GPIO number */
+  char color[32];   /* Color (green/white/etc) */
+  int status;       /* 0=OFF, 1=ON */
+} led_t;
+
+typedef struct {
+  led_t *white;
+  led_t *green;
+} leds_t;
+
+/* LEDs (global) */
+static leds_t g_leds;
+
 /* DACPD comm channel */
 typedef struct  {
   int sockfd;
@@ -80,7 +95,7 @@ static dacpd_t* dacpd_new(void) {
   /* Allocate new struct */
   dacpd_t *dacpd = (dacpd_t *)malloc(sizeof(dacpd_t));
   if (dacpd == NULL) {
-    printf("FATAL: Cannot allocate dacpd struct\n");
+    fprintf(stderr, "FATAL: Cannot allocate dacpd struct\n");
     exit(1);
   }
 
@@ -92,7 +107,7 @@ static dacpd_t* dacpd_new(void) {
   inet_aton("127.0.0.1", &dacpd->si.sin_addr);
 
   /* Debug */
-  printf("New DACPD comm channel created\n");
+  fprintf(stderr, "New DACPD comm channel created\n");
 
   return dacpd;
 
@@ -104,8 +119,7 @@ static void dacpd_cmd(const char* cmd) {
   if (cmd == NULL)
     return;
 
-  printf("%s\n", cmd); 
-  fflush(stdout);
+  fprintf(stderr, "%s\n", cmd); 
   sendto(g_dacpd->sockfd, cmd, strlen(cmd)+1, 0, (struct sockaddr *)&g_dacpd->si, sizeof(g_dacpd->si));
 
 }
@@ -152,7 +166,7 @@ static button_t* button_new(int id, const char* cmd, button_isr isr) {
   /* Allocate new button */
   button_t *button = (button_t *)malloc(sizeof(button_t));
   if (button == NULL) {
-    printf("FATAL: Cannot allocate button struct\n");
+    fprintf(stderr, "FATAL: Cannot allocate button struct\n");
     exit(1);
   }
 
@@ -168,12 +182,40 @@ static button_t* button_new(int id, const char* cmd, button_isr isr) {
 
   /* Register ISR */
   if (wiringPiISR(button->id, INT_EDGE_FALLING, button->isr) != 0) { 
-    printf("FATAL: Cannot setup ISR on button %d (%s)\n", button->id, button->cmd); 
+    fprintf(stderr, "FATAL: Cannot setup ISR on button %d (%s)\n", button->id, button->cmd); 
     exit(1);
   }
 
   /* Debug */
-  printf("New button %-11s on gpio %2d @ isr %p\n", button->cmd, button->id, button->isr);
+  fprintf(stderr, "New button %-11s on gpio %2d @ isr %p\n", button->cmd, button->id, button->isr);
+
+  return button;
+
+}
+
+/* Create a new button */
+static led_t* led_new(int id, const char* color, int status) {
+
+  /* Allocate new button */
+  led_t *led = (led_t *)malloc(sizeof(led_t));
+  if (led == NULL) {
+    fprintf(stderr, "FATAL: Cannot allocate LED struct\n");
+    exit(1);
+  }
+
+  /* Init data */
+  led->id = id;
+  led->status = status;
+  strncpy(button->color, color, 32);
+
+  /* Set mode to output */
+  pinMode(led->id, OUTPUT);
+
+  /* Drive on or OFF */
+  digitalWrite(led->id, status);
+
+  /* Debug */
+  fprintf(stderr, "New %s LED on gpio %2d: %s\n", led->color, led->id, led->status ? "ON" : "OFF");
 
   return button;
 
@@ -188,27 +230,20 @@ int main (void) {
   /* Create our DACPD comm channel */
   g_dacpd = dacpd_new();
 
+  /* Create our LEDs */
+  g_leds.white = led_new(23, "white", 1);
+  g_leds.green = led_new(24, "green", 0);
+
   /* Create our buttons */
-//#define PROTO /* Uses old pi 1 board GPIO mappings */
-#ifdef  PROTO
-  g_buttons.vdown = button_new(23, "volumeup",   isr_vdown);
-  g_buttons.vup   = button_new(24, "volumedown", isr_vup);
-  g_buttons.mute  = button_new(18, "mutetoggle", isr_mute);
-  g_buttons.next  = button_new(25, "nextitem",   isr_next);
-  g_buttons.prev  = button_new( 7, "previtem",   isr_prev);
-  g_buttons.pause = button_new( 8, "playpause",  isr_pause);
-#else
   g_buttons.vdown = button_new(13, "volumeup",   isr_vdown);
   g_buttons.vup   = button_new(26, "volumedown", isr_vup);
   g_buttons.mute  = button_new( 6, "mutetoggle", isr_mute);
   g_buttons.next  = button_new(12, "nextitem",   isr_next);
   g_buttons.prev  = button_new( 5, "previtem",   isr_prev);
   g_buttons.pause = button_new(16, "playpause",  isr_pause);
-#endif
 
   /* Start monitor - sleep since we have nothing to do here */
-  printf("Monitoring GPIO activity...\n");
-  fflush(stdout);
+  fprintf(stderr, "Monitoring GPIO activity...\n");
   while(1) {
     pause();
   }
