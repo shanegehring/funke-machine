@@ -231,8 +231,8 @@ int main (void) {
   g_dacpd = dacpd_new();
 
   /* Create our LEDs */
-  g_leds.white = led_new(23, "white", 1);
-  g_leds.green = led_new(24, "green", 0);
+  g_leds.white = led_new(24, "white", 1);
+  g_leds.green = led_new(23, "green", 0);
 
   /* Create our buttons */
   g_buttons.vdown = button_new(13, "volumeup",   isr_vdown);
