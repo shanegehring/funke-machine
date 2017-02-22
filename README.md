@@ -1,24 +1,42 @@
 # Funke Machine
 
+This project upgrades an old [Model 1519 Bendix Radio](http://www.radiomuseum.org/r/bendix_1519.html)
+console (circa 1947) into an AirPlay enabled stereo with local playback controls.  I 
+used the following off the shelf hardware components:
 
-## Install Raspbian with Hifiberry Stuff
+* Brains: [Raspberry Pi 3](http://a.co/fCFclja)
+* DAC: [Hifiberry DAC+ Standard RCA](http://a.co/i4NMN1Y)
+* AMP: [SMSL SA50 50Wx2 TDA7492 Class D Amplifier](http://a.co/5eHXQt0)
+* Speakers: [Micca MB42X Bookshelf Speakers](http://a.co/eMOfPOV)
 
-I used the 'lite' version.  
+In addition, I added local playback controls by using the existing radio buttons (old
+mechanical slide switches) and status LEDs.  This was all done via the pi GPIOs.  For
+example, if someone is air playing music from their phone, I can walk up to the console
+and adjust the volume or pause the music or skip to the next song.
 
-## Enable SSH
+The heart of the system relies on the excellent work done in the `shairport-sync` project
+by Mike Brady and James Laird and others.  I just hacked a small portion of their code to
+enable the local playback controls via DACP (Digital Access Control Protocol).
+
+## Raspberry Pi 3 Setup
+
+Install Raspbian with the hifiberry hardware pre-configured.  I used the 'lite' version 
+from here: https://www.hifiberry.com/build/download/
+
+### Enable SSH
 
     sudo raspi-config
     Interfacing Options -> SSH -> Enable
     Change User Password
     Reboot
 
-## SSH Login
+### SSH Login
 
 At this point, log in remotely via ssh like this...
 
     ssh pi@192.168.1.64
 
-## Enble wifi...
+### Enble wifi...
 
     sudo vi /etc/wpa_supplicant/wpa_supplicant.conf
 
@@ -31,7 +49,9 @@ At this point, log in remotely via ssh like this...
         psk="**passwordhere**"
     }
 
-## Install Sharepoint-Sync Build Dependencies
+## Shairport Sync Setup
+
+### Install sharepoint-sync build dependencies
 
     sudo apt-get update
     sudo apt-get install build-essential git
@@ -39,7 +59,7 @@ At this point, log in remotely via ssh like this...
     sudo apt-get install avahi-daemon libavahi-client-dev
     sudo apt-get install libssl-dev
 
-## Build Sharepoint-Sync    
+### Build sharepoint-sync
 
     mkdir git
     cd git
@@ -56,11 +76,11 @@ At this point, log in remotely via ssh like this...
     sudo make install
     # Enable on bootup
     sudo systemctl enable shairport-sync
-    
-## Configure
+
+### Configure
 
     sudo vi /etc/shairport-sync.conf
-    
+
 My settings...
 
     general = {
@@ -70,25 +90,30 @@ My settings...
     alsa = {
       output_device = "hw:0";
     };
-    
-## Run
+
+### Run
 
     sudo systemctl start shairport-sync
     sudo service shairport-sync status
-    
-## Server log file
+
+### Server log file
 
 Note, I saw some messages about "pulse" which don't seem to matter.
 
-    /var/log/syslog
+    tail -f /var/log/syslog
 
 ## Test it out
 
 At this point, if everything worked, you should see a "Funke Machine" available
-from your iPhone.
+from your iPhone.  If you've connected the hifiberry to a speaker, you should
+be able to hear it play.  This is the basic (out of the box) behavior of shairport-sync
+(which is great).  But, I wanted to add local playback controls via GPIOs.  See the
+following sub projects for more info...
 
+* [DACPD](dacpd/README.md)
+* [GPIOD](gpiod/README.md)
 
-# Notes
+# General Notes
 
 ## RTSP - Real Time Streaming Protocol
 
@@ -140,13 +165,13 @@ a song).  You will see this...
       Type: "CSeq", content: "0"
       Type: "Server", content: "AirTunes/105.1"
       Type: "Public", content: "ANNOUNCE, SETUP, RECORD, PAUSE, FLUSH, TEARDOWN, OPTIONS, GET_PARAMETER, SET_PARAMETER"
-      
+
 You can see a new connection and an OPTIONS request/response.  Take note of the DACP-ID and Active-Remote fields.
 
     shairport-sync -vvv 2>&1 | egrep -i 'dacp|daid|remote' | grep Type
     Type: "DACP-ID", content: "C5D6F116EEC74A5"
     Type: "Active-Remote", content: "2379330968"
-      
+
 The DACP-ID plus Active-Remote are what we need to talk (via HTTP to the client from the server).
 
 See: https://www.sugrsugr.com/index.php/airplay-prev-next/
@@ -160,7 +185,7 @@ and he provides a complete implementation of his control server.
 Install 'avahi-browse' from avahi-utils..
 
     sudu apt-get install avahi-utils
-    
+
 So, as you are streaming a song, run this..
 
     avahi-browse -v -a --resolve -p | grep -i itunes
@@ -187,7 +212,7 @@ events.
 http://www.win.tue.nl/~johanl/educ/IoT-Course/mDNS-SD%20Tutorial.pdf
 
 
-# Systemd Services
+## Systemd Services
 
 To launch gpiod and dacpd on bootup, I needed to create `unit` files for
 systemd.
