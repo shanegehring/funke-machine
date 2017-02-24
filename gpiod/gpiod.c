@@ -23,17 +23,20 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include <poll.h> 
 #include <stdio.h> 
 #include <string.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <wiringPi.h>
 #include <sys/socket.h>
+#include <net/if.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <arpa/inet.h>
 #include <time.h>
 #include <unistd.h>
+
 
 /* DACP Daemon Port */
 #define DACPD_PORT 3391
@@ -242,11 +245,59 @@ int main (void) {
   g_buttons.prev  = button_new( 5, "previtem",   isr_prev);
   g_buttons.pause = button_new(16, "playpause",  isr_pause);
 
+  /* Open socket for messages */
+  int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+  if (sockfd < 0) {
+    fprintf(stderr, "FATAL: Cannot create socket fd\n");
+    exit(1);
+  }
+
+  int port = 3392;
+
+  struct sockaddr_in si;
+  memset(&si, 0, sizeof(si));
+  si.sin_family = AF_INET;
+  si.sin_port = htons(port);
+  si.sin_addr.s_addr = htonl(INADDR_ANY);
+
+  if (bind(sockfd, (struct sockaddr *)&si, sizeof(si)) < 0) {
+    fprintf(stderr, "FATAL: Cannot bind port %d\n", port);
+    exit(1);
+  }
+
   /* Start monitor - sleep since we have nothing to do here */
   fprintf(stderr, "Monitoring GPIO activity...\n");
-  while(1) {
-    pause();
+  for (;;) {
+    struct pollfd pfds[] = {
+      {.fd = sockfd, .events = POLLIN|POLLERR|POLLHUP|POLLNVAL},
+    };
+    int r = poll(pfds, 1, -1);
+    if (r == 1) {
+      if (pfds[0].revents & POLLIN) {
+        char buf[2048] = {};
+        struct sockaddr sa;
+        socklen_t salen = sizeof(sa);
+        int i = recvfrom(sockfd, buf, sizeof(buf), 0, &sa, &salen);
+        if (i > 0) {
+           buf[i] = 0;
+        }
+        if (!strcmp(buf, "startsession")) {
+          fprintf(stderr, "Start session detected\n");
+        } else if (!strcmp(buf, "endsession")) {
+          fprintf(stderr, "End session detected\n");
+        }
+      }
+      if (pfds[0].revents & (POLLERR|POLLHUP|POLLNVAL)) {
+        break;
+      }
+    }
   }
+
+  fprintf(stderr, "Exit\n");
+
+  //while(1) {
+  //  pause();
+  //}
 
   return 0;
 }

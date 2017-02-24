@@ -123,12 +123,25 @@ int ipc_cli_send(const ipc_cli_t *cli, const char *msg) {
   return 0;
 }
 
-#ifdef IPC_TEST
+#ifdef IPC_TEST_SERVER
 int main(void) {
-   ipc_srv_t *srv;
-   ipc_cli_t *cli;
-
+   ipc_srv_t *srv = ipc_srv_new(12345);
+   char* msg;
+   while(1) {
+     ipc_srv_recv(srv, msg);
+     fprintf(stderr, "MSG: %s\n", msg);
+   }
+   return 0;
 }
+#endif
+#ifdef IPC_TEST_CLIENT
+int main(void) {
+   ipc_cli_t *cli = ipc_cli_new(12345);
+   ipc_cli_send(cli, "test 1");
+   ipc_cli_send(cli, "test 2");
+   ipc_cli_send(cli, "test 3");
+   return 0;
+}
+#endif
 
-#endif /* IPC_TEST */
 

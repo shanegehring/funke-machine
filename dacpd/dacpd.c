@@ -320,7 +320,8 @@ static void sockfd_recv(int fd, char *buf, int len) {
     buf[i] = 0;
 }
 
-static int resolve_itunes_ctrl(srv_t *srv, char *srv_name, char *active_remote) {
+static void srv_free(srv_t *srv) {
+
   if (srv->srv_name) {
     free(srv->srv_name);
     srv->srv_name = NULL;
@@ -335,6 +336,12 @@ static int resolve_itunes_ctrl(srv_t *srv, char *srv_name, char *active_remote) 
     free(srv->host);
     srv->host = NULL;
   }
+
+}
+
+static int resolve_itunes_ctrl(srv_t *srv, char *srv_name, char *active_remote) {
+
+  srv_free(srv);
 
   fprintf(stderr, "resolve: srv=%s active_remote=%s\n", srv_name, active_remote);
 
@@ -369,6 +376,9 @@ static void run_cmd(srv_t *srv, char *s) {
       sleep(1);
       n--;
     }
+  } else if (!strcmp(s, "endsession")) {
+    fprintf(stderr, "End session detected\n");
+    srv_free(srv);
   } else if (srv->host != NULL) {
     run_dcap_cmd(srv->host, s, srv->active_remote);
   }
