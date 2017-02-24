@@ -2,7 +2,10 @@
 
 This component uses the `wiringPi` library to control AirPlay playback
 options (next, prev, mute, etc.) via monitoring GPIO pin changes caused
-by physical push buttons.
+by physical push buttons.  Additionally, it receives IPC messages from
+the shairport-dacpd deaemon indicating when an AirPlay device is 
+active/connected.  We use this information to change output GPIO pins 
+driving indicator LEDs on the front of the console.
 
 The shairport-dacpd daemon receives messages generated from this component
 when a button is pushed.  It then handles the DACP portion of communicating
@@ -56,6 +59,8 @@ care of the transition noise from the mechanical switch.  Communication to
 the DACP daemon is just a simple UDP socket write of a string like "volumeup".
 
 # Installation
+
+If you just want to build and install the component, do this.
 
     ./autogen.sh
     ./configure
