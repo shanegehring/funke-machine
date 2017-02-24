@@ -391,7 +391,6 @@ int main(int argc, char *argv[]) {
 
     /* Shutdown message */
     if (!strcmp(msg, "exit")) {
-      fprintf(stderr, "Received 'exit' message\n");
       break;
     /* Messages from UI (playback controls) */
     } else if (
@@ -404,7 +403,6 @@ int main(int argc, char *argv[]) {
         run_dcap_cmd(srv.host, msg, srv.active_remote);
     /* Messages from shairport (DACP sessions) */
     } else if (!strcmp(msg, "dacp_close")) {
-      fprintf(stderr, "Received 'dacp_close' message\n");
       srv_free(&srv);
       ipc_cli_send(ipc_cli, "dacp_close");
     } else {

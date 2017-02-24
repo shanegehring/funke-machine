@@ -34,6 +34,9 @@
 #ifndef IPC_H
 #define IPC_H
 
+#include <sys/socket.h>
+#include <arpa/inet.h>
+
 /* Server */
 typedef struct {
   int port;

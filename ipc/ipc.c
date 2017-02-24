@@ -29,14 +29,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-
-#include <poll.h>
-#include <sys/socket.h>
-#include <net/if.h>
-#include <netinet/in.h>
-#include <netinet/tcp.h>
-#include <arpa/inet.h>
-
 #include "ipc.h"
 
 ipc_srv_t *ipc_srv_new(int port) {

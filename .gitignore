@@ -56,4 +56,6 @@ depcomp
 install-sh
 missing
 stamp-h1
-Makefile
+gpiod/Makefile
+dacpd/Makefile
+.dirstamp

@@ -23,19 +23,19 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include <poll.h> 
+//#include <poll.h> 
 #include <stdio.h> 
 #include <string.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <wiringPi.h>
-#include <sys/socket.h>
-#include <net/if.h>
-#include <netinet/in.h>
-#include <netinet/tcp.h>
-#include <arpa/inet.h>
+//#include <sys/socket.h>
+//#include <net/if.h>
+//#include <netinet/in.h>
+//#include <netinet/tcp.h>
+//#include <arpa/inet.h>
 #include <time.h>
-#include <unistd.h>
+//#include <unistd.h>
 
 #include "ipc.h"
 
@@ -214,7 +214,7 @@ int main (void) {
   }
 
   /* Service */
-  fprintf(stderr, "GPIOD service active\n");
+  fprintf(stderr, "GPIOD listening for messages on port %d\n", GPIOD_PORT);
   char msg[256];
   while(1) {
 
@@ -227,9 +227,9 @@ int main (void) {
       break;
     /* DACP session status messages */
     } else if (!strcmp(msg, "dacp_open")) {
-       digitalWrite(g_leds->green->id, 1);
+       digitalWrite(g_leds.green->id, 1);
     } else if (!strcmp(msg, "dacp_close")) {
-       digitalWrite(g_leds->green->id, 0);
+       digitalWrite(g_leds.green->id, 0);
     }
 
   }
