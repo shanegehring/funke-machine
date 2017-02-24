@@ -29,13 +29,7 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <wiringPi.h>
-//#include <sys/socket.h>
-//#include <net/if.h>
-//#include <netinet/in.h>
-//#include <netinet/tcp.h>
-//#include <arpa/inet.h>
 #include <time.h>
-//#include <unistd.h>
 
 #include "ipc.h"
 
@@ -228,12 +222,16 @@ int main (void) {
     /* DACP session status messages */
     } else if (!strcmp(msg, "dacp_open")) {
        digitalWrite(g_leds.green->id, 1);
+       digitalWrite(g_leds.white->id, 0);
     } else if (!strcmp(msg, "dacp_close")) {
        digitalWrite(g_leds.green->id, 0);
+       digitalWrite(g_leds.white->id, 1);
     }
 
   }
 
+  digitalWrite(g_leds.green->id, 0);
+  digitalWrite(g_leds.white->id, 0);
   fprintf(stderr, "GPIOD exit\n");
 
   return 0;
