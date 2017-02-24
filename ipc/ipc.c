@@ -115,14 +115,13 @@ int ipc_cli_send(const ipc_cli_t *cli, const char *msg) {
 #ifdef IPC_TEST_SERVER
 int main(void) {
   ipc_srv_t *srv = ipc_srv_new(12345);
-  char msg[2014];
-  int i;
+  char msg[128];
   fprintf(stderr, "Server active, waiting for messages\n");
   while(1) {
     ipc_srv_recv(srv, msg);
     fprintf(stderr, "MSG: %s\n", msg);
     if (!strcmp(msg, "exit")) {
-        break;
+      break;
     } 
   }
   return 0;
