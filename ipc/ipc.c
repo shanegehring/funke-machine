@@ -78,26 +78,15 @@ int ipc_srv_recv(const ipc_srv_t *srv, char *msg) {
      return -1;
   }
 
-  for (;;) {
-    struct pollfd pfds[] = {
-      {.fd = srv->sockfd, .events = POLLIN|POLLERR|POLLHUP|POLLNVAL},
-    };
-    int r = poll(pfds, 1, -1);
-    if (r == 1) {
-      if (pfds[0].revents & POLLIN) {
-        struct sockaddr sa;
-        socklen_t salen = sizeof(sa);
-        int i = recvfrom(srv->sockfd, msg, sizeof(msg), 0, &sa, &salen);
-        if (i > 0) {
-           msg[i] = 0;
-        }
-      }
-      if (pfds[0].revents & (POLLERR|POLLHUP|POLLNVAL)) {
-        break;
-      }
-    }
+  struct sockaddr sa;
+  socklen_t salen = sizeof(sa);
+  int i = recvfrom(srv->sockfd, msg, sizeof(msg), 0, &sa, &salen);
+  if (i > 0) {
+    msg[i] = 0;
   }
+
   return 0;
+
 }
 
 ipc_cli_t *ipc_cli_new(int port) {
@@ -125,22 +114,28 @@ int ipc_cli_send(const ipc_cli_t *cli, const char *msg) {
 
 #ifdef IPC_TEST_SERVER
 int main(void) {
-   ipc_srv_t *srv = ipc_srv_new(12345);
-   char* msg;
-   while(1) {
-     ipc_srv_recv(srv, msg);
-     fprintf(stderr, "MSG: %s\n", msg);
-   }
-   return 0;
+  ipc_srv_t *srv = ipc_srv_new(12345);
+  char msg[2014];
+  int i;
+  fprintf(stderr, "Server active, waiting for messages\n");
+  while(1) {
+    ipc_srv_recv(srv, msg);
+    fprintf(stderr, "MSG: %s\n", msg);
+    if (!strcmp(msg, "exit")) {
+        break;
+    } 
+  }
+  return 0;
 }
 #endif
 #ifdef IPC_TEST_CLIENT
 int main(void) {
-   ipc_cli_t *cli = ipc_cli_new(12345);
-   ipc_cli_send(cli, "test 1");
-   ipc_cli_send(cli, "test 2");
-   ipc_cli_send(cli, "test 3");
-   return 0;
+  ipc_cli_t *cli = ipc_cli_new(12345);
+  ipc_cli_send(cli, "test 1");
+  ipc_cli_send(cli, "test 2");
+  ipc_cli_send(cli, "test 3");
+  ipc_cli_send(cli, "exit");
+  return 0;
 }
 #endif
 

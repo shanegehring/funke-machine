@@ -21,6 +21,14 @@
  * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
+ *
+ * Notes:
+ *   The use case for this API is for very simple one way client to
+ *   server string message passing via UDP.  UDP is nice for this 
+ *   use case because I just want the clients to broadcast updates 
+ *   to anyone who happens to be listening.  If the server isn't 
+ *   up and listening, the messages just get lost.  This is actually
+ *   what I want... lightweight, simple, forgiving.
  */
 
 #ifndef IPC_H
@@ -33,7 +41,12 @@ typedef struct {
   struct sockaddr_in si;
 } ipc_srv_t;
 
+/* Creates a new server on the specified port */
 ipc_srv_t *ipc_srv_new(int port);
+
+/* Blocks until a new message is received from the client.
+ * Note: The msg param must be allocated by the caller and
+ * be large enough to accomodate the largest message */
 int ipc_srv_recv(const ipc_srv_t *srv, char *msg);
 
 /* Client */
@@ -43,7 +56,10 @@ typedef struct {
   struct sockaddr_in si;
 } ipc_cli_t;
 
+/* Creates a new client connection to the server on the specified port */
 ipc_cli_t *ipc_cli_new(int port);
+
+/* Sends message to the server */
 int ipc_cli_send(const ipc_cli_t *cli, const char *msg);
 
 #endif /* IPC_H */
