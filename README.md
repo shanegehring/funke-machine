@@ -1,8 +1,20 @@
 # Funke Machine
 
 This project upgrades an old [Model 1519 Bendix Radio](http://www.radiomuseum.org/r/bendix_1519.html)
-console (circa 1947) into an AirPlay enabled stereo with local playback controls.  I 
-used the following off the shelf hardware components:
+console (circa 1947) into an AirPlay enabled stereo with local playback controls.  
+The console itself is a family heirloom handed down to my wife who's maiden name 
+is `Funke` (hence Funke Machine).  My wife restored the wood and interior of the
+console several years ago.  But, it hasn't been used for playing music in a very
+long time.  
+
+We were looking for something that was easy to use but retained the original look
+and feel.  I chose to make it an AirPlay server because I feel this is the easiest 
+way to play music from Spotify, Pandora, Apple Music, etc.  We've used blue tooth 
+speakers in the past, but found them annoying from a setup standpoint and and 
+limited in range.  In contrast, AirPlay connections are supported natively within
+the apps and are only limited by the WiFi coverage in your home.
+
+I used the following off the shelf hardware components:
 
 * Brains: [Raspberry Pi 3](http://a.co/fCFclja)
 * DAC: [Hifiberry DAC+ Standard RCA](http://a.co/i4NMN1Y)
@@ -12,7 +24,11 @@ used the following off the shelf hardware components:
 In addition, I added local playback controls by using the existing radio buttons (old
 mechanical slide switches) and status LEDs.  This was all done via the pi GPIOs.  For
 example, if someone is air playing music from their phone, I can walk up to the console
-and adjust the volume or pause the music or skip to the next song.
+and adjust the volume or pause the music or skip to the next song.  When installing my
+upgrades, I found that original console had a little indicator light centered in the 
+bottom of front molding.  I routed a couple LEDs to the opening and used the GPIO outputs
+on the pi to indicated status.  A white LED shines when the unit is active and a green
+LED shines when someone is playing content via AirPlay.
 
 The heart of the system relies on the excellent work done in the `shairport-sync` project
 by Mike Brady and James Laird and others.  I just hacked a small portion of their code to
@@ -36,7 +52,7 @@ At this point, log in remotely via ssh like this...
 
     ssh pi@192.168.1.64
 
-### Enble wifi...
+### Enble WiFi...
 
     sudo vi /etc/wpa_supplicant/wpa_supplicant.conf
 
