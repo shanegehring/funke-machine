@@ -68,7 +68,7 @@ ipc_srv_t *ipc_srv_new(int port) {
 
 }
 
-int ipc_srv_recv(const ipc_srv_t *srv, char *msg) {
+int ipc_srv_recv(const ipc_srv_t *srv, char *msg, int maxlen) {
 
   if (srv == NULL)  {
      return -1;
@@ -80,7 +80,7 @@ int ipc_srv_recv(const ipc_srv_t *srv, char *msg) {
 
   struct sockaddr sa;
   socklen_t salen = sizeof(sa);
-  int i = recvfrom(srv->sockfd, msg, sizeof(msg), 0, &sa, &salen);
+  int i = recvfrom(srv->sockfd, msg, maxlen, 0, &sa, &salen);
   if (i > 0) {
     msg[i] = 0;
   }
@@ -118,7 +118,7 @@ int main(void) {
   char msg[128];
   fprintf(stderr, "Server active, waiting for messages\n");
   while(1) {
-    ipc_srv_recv(srv, msg);
+    ipc_srv_recv(srv, msg, 128);
     fprintf(stderr, "MSG: %s\n", msg);
     if (!strcmp(msg, "exit")) {
       break;

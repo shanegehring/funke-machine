@@ -1,3 +1,30 @@
+/*
+ * DACP Daemon. This file is part of Funke Machine.
+ * Copyright (c) Shane Gehring 2017
+ * 
+ * Code leveraged from: https://www.sugrsugr.com/index.php/airplay-prev-next
+ *
+ * Permission is hereby granted, free of charge, to any person
+ * obtaining a copy of this software and associated documentation
+ * files (the "Software"), to deal in the Software without
+ * restriction, including without limitation the rights to use,
+ * copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+ * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
+ */
+
 #include <poll.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -22,6 +49,11 @@
 #include <avahi-common/llist.h>
 #include <avahi-client/client.h>
 #include <avahi-client/lookup.h>
+
+#include "ipc.h"
+
+#define DACPD_PORT (3391)
+#define GPIOD_PORT (3392)
 
 static void *memdup(void *p, int size) {
   void *r = malloc(size);
@@ -268,21 +300,26 @@ static void client_callback(AvahiClient *cli, AvahiClientState state, void *ud) 
   }
 }
 
-static void run_dcap_cmd(host_t *host, char *op, char *active_remote) {
+static void run_dcap_cmd(host_t *host, char *msg, char *active_remote) {
+
+  if ((host == NULL) || (msg == NULL) || (active_remote == NULL)) {
+    return;
+  }
+
+  int rc;
   char *cmd = (char *)malloc(128 + strlen(active_remote));
   sprintf(cmd, "curl 'http://%s:%d/ctrl-int/1/%s' -H 'Active-Remote: %s' -H 'Host: starlight.local.'", 
-      host->addr, host->port, op, active_remote);
+      host->addr, host->port, msg, active_remote);
   fprintf(stderr, "cmd: %s\n", cmd);
-  system(cmd);
+  rc = system(cmd);
   free(cmd);
+
 }
 
 typedef struct {
-  int stat;
   host_t *host;
   char *srv_name;
   char *active_remote;
-  int p_cmd[2];
 } srv_t;
 
 enum {
@@ -290,35 +327,6 @@ enum {
   RESOLVING,
   RESOLVED,
 };
-
-static int sockfd_new() {
-  int fd = socket(AF_INET, SOCK_DGRAM, 0);
-  if (fd < 0)
-    return -1;
-
-  int port = 3391;
-
-  struct sockaddr_in si;
-  memset(&si, 0, sizeof(si));
-  si.sin_family = AF_INET;
-  si.sin_port = htons(port);
-  si.sin_addr.s_addr = htonl(INADDR_ANY);
-
-  if (bind(fd, (struct sockaddr *)&si, sizeof(si)) < 0)
-    return -1;
-
-  fprintf(stderr, "binded :%d\n", port);
-
-  return fd;
-}
-
-static void sockfd_recv(int fd, char *buf, int len) {
-  struct sockaddr sa; 
-  socklen_t salen = sizeof(sa);
-  int i = recvfrom(fd, buf, len, 0, &sa, &salen);
-  if (i > 0)
-    buf[i] = 0;
-}
 
 static void srv_free(srv_t *srv) {
 
@@ -362,55 +370,63 @@ static int resolve_itunes_ctrl(srv_t *srv, char *srv_name, char *active_remote) 
   return !!rsv.found;
 }
 
-static void run_cmd(srv_t *srv, char *s) {
-  int n = strlen(s);
-
-  char *srv_name = (char *)malloc(n);
-  char *active_remote = (char *)malloc(n);
-
-  fprintf(stderr, "cmd: %s\n", s);
-
-  if (sscanf(s, "resolve,%[^,],%[^,]", srv_name, active_remote) == 2) {
-    int n = 10;
-    while (n > 0 && !resolve_itunes_ctrl(srv, srv_name, active_remote)) {
-      sleep(1);
-      n--;
-    }
-  } else if (!strcmp(s, "endsession")) {
-    fprintf(stderr, "End session detected\n");
-    srv_free(srv);
-  } else if (srv->host != NULL) {
-    run_dcap_cmd(srv->host, s, srv->active_remote);
-  }
-
-cleanup:
-  free(srv_name);
-  free(active_remote);
-}
-
-static void poll_loop(srv_t *s) {
-  int sockfd = sockfd_new();
-
-  for (;;) {
-    struct pollfd pfds[] = {
-      {.fd = sockfd, .events = POLLIN|POLLERR|POLLHUP|POLLNVAL},
-    };
-    int r = poll(pfds, 1, -1);
-    if (r == 1) {
-      if (pfds[0].revents & POLLIN) {
-        char buf[2048] = {};
-        sockfd_recv(sockfd, buf, sizeof(buf));
-        run_cmd(s, buf);
-      }
-      if (pfds[0].revents & (POLLERR|POLLHUP|POLLNVAL))
-        break;
-    }
-  }
-}
-
+/* 
+ * All of the UDP server/client communication takes place here (main).
+ * The avahi lookup code and dacp client communication is handled above.
+ */
 int main(int argc, char *argv[]) {
-  srv_t s = {};
-  poll_loop(&s);
-  return 0;
-}
+  
+  srv_t srv = { .host = NULL, .srv_name = NULL, .active_remote = NULL };
+  char msg[256];
 
+  ipc_srv_t *ipc_srv = ipc_srv_new(DACPD_PORT);
+  ipc_cli_t *ipc_cli = ipc_cli_new(GPIOD_PORT);
+
+  fprintf(stderr, "DACPD listening for messages on port %d\n", DACPD_PORT);
+
+  while(1) {
+
+    ipc_srv_recv(ipc_srv, msg, 256);
+    fprintf(stderr, "msg: %s\n", msg);
+
+    /* Shutdown message */
+    if (!strcmp(msg, "exit")) {
+      fprintf(stderr, "Received 'exit' message\n");
+      break;
+    /* Messages from UI (playback controls) */
+    } else if (
+      (!strcmp(msg, "volumeup"))   ||
+      (!strcmp(msg, "volumedown")) ||
+      (!strcmp(msg, "mutetoggle")) ||
+      (!strcmp(msg, "nextitem"))   ||
+      (!strcmp(msg, "previtem"))   ||
+      (!strcmp(msg, "playpause"))  ){
+        run_dcap_cmd(srv.host, msg, srv.active_remote);
+    /* Messages from shairport (DACP sessions) */
+    } else if (!strcmp(msg, "dacp_close")) {
+      fprintf(stderr, "Received 'dacp_close' message\n");
+      srv_free(&srv);
+      ipc_cli_send(ipc_cli, "dacp_close");
+    } else {
+      size_t n = strlen(msg);
+      char *srv_name = (char *)malloc(n);
+      char *active_remote = (char *)malloc(n);
+      if (sscanf(msg, "dacp_open,%[^,],%[^,]", srv_name, active_remote) == 2) {
+        int n = 10;
+        while (n > 0 && !resolve_itunes_ctrl(&srv, srv_name, active_remote)) {
+          sleep(1);
+          n--;
+        }
+        ipc_cli_send(ipc_cli, "dacp_open");
+      }
+      free(srv_name);
+      free(active_remote);
+    }
+
+  }
+
+  fprintf(stderr, "DACPD exiting\n");
+
+  return 0;
+
+}

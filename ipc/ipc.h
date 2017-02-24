@@ -46,8 +46,9 @@ ipc_srv_t *ipc_srv_new(int port);
 
 /* Blocks until a new message is received from the client.
  * Note: The msg param must be allocated by the caller and
- * be large enough to accomodate the largest message */
-int ipc_srv_recv(const ipc_srv_t *srv, char *msg);
+ * be large enough to accomodate the largest message length
+ * (maxlen) */
+int ipc_srv_recv(const ipc_srv_t *srv, char *msg, int maxlen);
 
 /* Client */
 typedef struct {

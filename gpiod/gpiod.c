@@ -37,12 +37,17 @@
 #include <time.h>
 #include <unistd.h>
 
+#include "ipc.h"
 
-/* DACP Daemon Port */
-#define DACPD_PORT 3391
+/* DACP/GPIO Daemon Ports */
+#define DACPD_PORT (3391)
+#define GPIOD_PORT (3392)
 
 /* By default, suppress anything under X ms */
 #define DEBOUNCE_NSEC (250*1000*1000)
+
+/* DACPD comm channel pointer (global) */
+static ipc_cli_t *g_dacpd;
 
 /* Button ISR callback signature */
 typedef void (*button_isr)(void);
@@ -83,50 +88,6 @@ typedef struct {
 /* LEDs (global) */
 static leds_t g_leds;
 
-/* DACPD comm channel */
-typedef struct  {
-  int sockfd;
-  struct sockaddr_in si;
-} dacpd_t;
-
-/* DACPD comm channel pointer (global) */
-static dacpd_t* g_dacpd;
-
-/* Creates new DACPD comm channel */
-static dacpd_t* dacpd_new(void) {
-
-  /* Allocate new struct */
-  dacpd_t *dacpd = (dacpd_t *)malloc(sizeof(dacpd_t));
-  if (dacpd == NULL) {
-    fprintf(stderr, "FATAL: Cannot allocate dacpd struct\n");
-    exit(1);
-  }
-
-  /* Create and init the socket */
-  dacpd->sockfd = socket(AF_INET, SOCK_DGRAM, 0);
-  memset(&dacpd->si, 0, sizeof(dacpd->si));
-  dacpd->si.sin_family = AF_INET;
-  dacpd->si.sin_port = htons(DACPD_PORT);
-  inet_aton("127.0.0.1", &dacpd->si.sin_addr);
-
-  /* Debug */
-  fprintf(stderr, "New DACPD comm channel created\n");
-
-  return dacpd;
-
-}
-
-/* Sends message to DACPD */
-static void dacpd_cmd(const char* cmd) {
-
-  if (cmd == NULL)
-    return;
-
-  fprintf(stderr, "%s\n", cmd); 
-  sendto(g_dacpd->sockfd, cmd, strlen(cmd)+1, 0, (struct sockaddr *)&g_dacpd->si, sizeof(g_dacpd->si));
-
-}
-
 /* Debounces button press events */
 static void debounce(button_t *button) {
 
@@ -151,7 +112,7 @@ static void debounce(button_t *button) {
 
   /* Filter if less than our threshold */
   if (!((deltatime.tv_sec == 0) && (deltatime.tv_nsec < DEBOUNCE_NSEC))) {
-    dacpd_cmd(button->cmd);
+    ipc_cli_send(g_dacpd, button->cmd);
   }
 }
 
@@ -231,7 +192,7 @@ int main (void) {
   wiringPiSetupGpio();
 
   /* Create our DACPD comm channel */
-  g_dacpd = dacpd_new();
+  g_dacpd = ipc_cli_new(DACPD_PORT);
 
   /* Create our LEDs */
   g_leds.white = led_new(24, "white", 1);
@@ -245,59 +206,35 @@ int main (void) {
   g_buttons.prev  = button_new( 5, "previtem",   isr_prev);
   g_buttons.pause = button_new(16, "playpause",  isr_pause);
 
-  /* Open socket for messages */
-  int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
-  if (sockfd < 0) {
-    fprintf(stderr, "FATAL: Cannot create socket fd\n");
+  /* Open channel for messages */
+  ipc_srv_t *gpiod = ipc_srv_new(GPIOD_PORT);
+  if (gpiod == NULL) {
+    fprintf(stderr, "FATAL: Cannot create IPC server\n");
     exit(1);
   }
 
-  int port = 3392;
+  /* Service */
+  fprintf(stderr, "GPIOD service active\n");
+  char msg[256];
+  while(1) {
 
-  struct sockaddr_in si;
-  memset(&si, 0, sizeof(si));
-  si.sin_family = AF_INET;
-  si.sin_port = htons(port);
-  si.sin_addr.s_addr = htonl(INADDR_ANY);
+    ipc_srv_recv(gpiod, msg, 256);
+    fprintf(stderr, "msg: %s\n", msg);
 
-  if (bind(sockfd, (struct sockaddr *)&si, sizeof(si)) < 0) {
-    fprintf(stderr, "FATAL: Cannot bind port %d\n", port);
-    exit(1);
-  }
-
-  /* Start monitor - sleep since we have nothing to do here */
-  fprintf(stderr, "Monitoring GPIO activity...\n");
-  for (;;) {
-    struct pollfd pfds[] = {
-      {.fd = sockfd, .events = POLLIN|POLLERR|POLLHUP|POLLNVAL},
-    };
-    int r = poll(pfds, 1, -1);
-    if (r == 1) {
-      if (pfds[0].revents & POLLIN) {
-        char buf[2048] = {};
-        struct sockaddr sa;
-        socklen_t salen = sizeof(sa);
-        int i = recvfrom(sockfd, buf, sizeof(buf), 0, &sa, &salen);
-        if (i > 0) {
-           buf[i] = 0;
-        }
-        if (!strcmp(buf, "startsession")) {
-          fprintf(stderr, "Start session detected\n");
-        } else if (!strcmp(buf, "endsession")) {
-          fprintf(stderr, "End session detected\n");
-        }
-      }
-      if (pfds[0].revents & (POLLERR|POLLHUP|POLLNVAL)) {
-        break;
-      }
+    /* Shutdown message */
+    if (!strcmp(msg, "exit")) {
+      fprintf(stderr, "Received 'exit' message\n");
+      break;
+    /* DACP session status messages */
+    } else if (!strcmp(msg, "dacp_open")) {
+       digitalWrite(g_leds->green.id, 1);
+    } else if (!strcmp(msg, "dacp_close")) {
+       digitalWrite(g_leds->green.id, 0);
     }
+
   }
 
-  fprintf(stderr, "Exit\n");
-
-  //while(1) {
-  //  pause();
-  //}
+  fprintf(stderr, "GPIOD exit\n");
 
   return 0;
 }
