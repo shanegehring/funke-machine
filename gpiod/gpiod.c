@@ -227,9 +227,9 @@ int main (void) {
       break;
     /* DACP session status messages */
     } else if (!strcmp(msg, "dacp_open")) {
-       digitalWrite(g_leds->green.id, 1);
+       digitalWrite(g_leds->green->id, 1);
     } else if (!strcmp(msg, "dacp_close")) {
-       digitalWrite(g_leds->green.id, 0);
+       digitalWrite(g_leds->green->id, 0);
     }
 
   }
