@@ -1,11 +1,11 @@
 # Shairport DACP Daemon
 
-This code is how we control the iDevice streaming the audio.  For example,
-we can play the next song, or modify the volume.  This is done via the
-DACP protocol (Digital Access Control Protocol).  This is an HTTP protocol.
+This component controls the audio streaming device.  For example, we can play 
+the next song, or modify the volume.  This is done via DACP (Digital Access 
+Control Protocol).  This is an HTTP protocol.
 
-This is a UDP server on port 3391.  This code was copied from an article
-I read here...
+The component uses the shared IPC utilies and is both a UDP server and client.
+Much of this code was leveraged from an article I read here...
 
 * https://www.sugrsugr.com/index.php/airplay-prev-next/
 
@@ -13,6 +13,9 @@ It listens for messages from two sources:
 
 1. The modified shairport server (DACP ID and Active Remote ID info) 
 2. User messages like 'nextitem', 'previtem', etc.
+
+It also sends messages to the GPIO daemon that indicate when a new AirPlay
+client is attached or detached.
 
 Example of how to send a user message...
 
@@ -37,6 +40,8 @@ Commands via DACP:
 |volumeup      | turn audio volume up              |
 
 # Installation
+
+If you just want to build and install the component, do this...
 
     sudo apt-get install libavahi-core-dev
 
