@@ -14,6 +14,8 @@ speakers in the past, but found them annoying from a setup standpoint and and
 limited in range.  In contrast, AirPlay connections are supported natively within
 most apps and are only limited by the WiFi coverage in your home.
 
+![Console Image](/images/stylized.jpg)
+
 I used the following off the shelf hardware components:
 
 * Brains: [Raspberry Pi 3](http://a.co/fCFclja) (built in WiFi)
