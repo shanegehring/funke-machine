@@ -41,6 +41,10 @@ by Mike Brady and James Laird and others.  I just hacked a small portion of thei
 enable the local playback controls via DACP (Digital Access Control Protocol).  See my 
 fork of shairport-sync [here](https://github.com/shanegehring/shairport-sync).
 
+## Overview
+
+![Overview Block Diagram Image](/images/overview.png)
+
 Below are a combination of installation instructions and notes I kept during the 
 process.
 
