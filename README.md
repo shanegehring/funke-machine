@@ -43,6 +43,19 @@ fork of shairport-sync [here](https://github.com/shanegehring/shairport-sync).
 
 ## Overview
 
+Let's walk through a typical usage scenario.  The shairport server advertises itself as an
+AirPlay server on the network.  This allows an iPhone to discover the device and use it
+as a streaming target.  For example, when playing music from the Spotify app, the "Funke Machine"
+shows up as an available device (see [this](/images/airplay.png) and [this](/images/spotify.png)).
+Once the client connects to the shairport server, a message is sent from the shairport server
+to the DACPD.  This message provides the DACPD with information about how to communicate (via
+HTTP) with the client device.  This is how the DACPD tells the client to change the volume, 
+pause, etc. When a new client connects or disconnects from the shairport server, the DACPD 
+passes these event notifications to the GPIOD so that the status LEDs can be changed.  The 
+GPIOD also "listens" for button press events.  GPIO interrupts are used to detect button presses.
+These events are "debounced" in the software.  When a button press is detected, the function 
+(volume up) is sent from the GPIOD to the DACPD then from the DACPD to the client device itself.
+
 ![Overview Block Diagram Image](/images/overview.png)
 
 Below are a combination of installation instructions and notes I kept during the 
