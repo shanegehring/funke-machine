@@ -66,18 +66,15 @@ process.
 Install Raspbian with the hifiberry hardware pre-configured.  I used the 'lite' version 
 from here: https://www.hifiberry.com/build/download/
 
+Note, to burn the *.img file on the SD card, just use `Win32 Disk Imager`.  I downloaded it from here:  https://sourceforge.net/projects/win32diskimager/postdownload?source=dlp
+
+
 ### Enable SSH
 
     sudo raspi-config
     Interfacing Options -> SSH -> Enable
     Change User Password
-    Reboot
-
-### SSH Login
-
-At this point, log in remotely via ssh like this...
-
-    ssh pi@192.168.1.64
+    sudo reboot
 
 ### Enble WiFi...
 
@@ -90,6 +87,14 @@ At this point, log in remotely via ssh like this...
         ssid="Gehring"
         psk="password_goes_here"
     }
+
+    sudo reboot
+
+## SSH Login
+
+At this point, log in remotely via ssh like this...
+
+   ssh pi@192.168.1.64
 
 ## Shairport Sync Setup
 
@@ -157,6 +162,37 @@ See the following sub projects for more info...
 
 * [DACPD](dacpd/README.md)
 * [GPIOD](gpiod/README.md)
+
+The digested version (setup)...
+
+    cd ~/git
+    git clone https://github.com/shanegehring/funke-machine.git
+    # DACPD
+    cd ~/git/funke-machine/dacpd
+    sudo apt-get install libavahi-core-dev
+    ./autogen.sh
+    ./configure
+    make
+    sudo make install
+    sudo cp dacpd.service /lib/systemd/system/
+    sudo systemctl enable dacpd # Start after reboot
+    sudo systemctl start  dacpd
+    sudo systemctl status dacpd
+    # WiringPi Library
+    cd ~/git
+    git clone git://git.drogon.net/wiringPi
+    cd wiringPi
+    ./build
+    # GPIOD
+    cd ~/git/funke-machine/gpiod
+    ./autogen.sh
+    ./configure
+    make
+    sudo make install
+    sudo cp gpiod.service /lib/systemd/system/
+    sudo systemctl enable gpiod # Start after reboot
+    sudo systemctl start  gpiod
+    sudo systemctl status gpiod
 
 # General Notes
 
